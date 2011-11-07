@@ -97,19 +97,24 @@ class MyllyBot {
 		#handles the connection
 		$this->connect();
 	}
+    
+    function log_timestamp()
+    {
+        /* Timestamp generation */
+        list($usec, $sec) = explode(" ",microtime());
+        $string = ((float)$usec + (float)$sec);
+
+        $string2 = explode(".", $string);
+
+        return date("d-m-Y H:i:s", $string2[0]).":".$string2[1];
+    }
 
     function debug_msg($s)
     {
         if($this->debug === 1)
         {
-            /* Timestamp generation */
-            list($usec, $sec) = explode(" ",microtime());
-            $string = ((float)$usec + (float)$sec);
-
-            $string2 = explode(".", $string);
-
-            $timestamp = date("d-m-Y H:i:s", $string2[0]).":".$string2[1];
-        
+            $timestamp = $this->log_timestamp();
+            
             if(is_array($s))
             {
                 echo $timestamp . " - ";
@@ -343,12 +348,12 @@ class MyllyBot {
 	function logging()
 	{
 		if(!$this->lfp)
-		{ #file not open
+		{
 			$this->lfp = fopen('log.txt', 'w');
 		}
 
-		$time = date('d/m/Y-H:i');
-		fputs($this->lfp, $time." - ".$this->rawdata."\n");
+		$timestamp = $this->log_timestamp();
+		fputs($this->lfp, $timestamp . " - " . $this->rawdata."\n");
 	}
 
 	function handle_function($command, $vars='')
