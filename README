@@ -1,3 +1,103 @@
-MYLLYBOT
+ __  __       _ _       ____        _   
+|  \/  |     | | |     |  _ \      | |  
+| \  / |_   _| | |_   _| |_) | ___ | |_ 
+| |\/| | | | | | | | | |  _ < / _ \| __|
+| |  | | |_| | | | |_| | |_) | (_) | |_ 
+|_|  |_|\__, |_|_|\__, |____/ \___/ \__|
+         __/ |     __/ |                
+        |___/     |___/                 
 
-TODO: README
+		
+     THE Open source PHP IRC bot
+	 
+I   Basic funtionality
+    I.I		Setting the environment
+    I.II	Basic commands
+	
+II  3rd party commands
+    II.I 	Adding commands
+	
+III Web interface
+
+IV  Other stuff
+
+
+I   Basic functionality
+----------------------------------------------
+----------------------------------------------
+
+Basic functionality of MyllyBot is to connect
+IRC server and join currently one channel.
+It also supports URL logging and 3rd party 
+commands
+
+I.I     Setting the environment
+----------------------------------------------
+MyllyBot requires PHP, MySQL and CURL installed
+to the server. Easy installation:
+
+    1. Set up the database (see myllybot.db)
+    2. Extract all the files to place you want 
+       to run the bot
+    3. Set up the bot name and other information
+       from mylly.php
+    4. Start the bot by typing 'php mylly.php'
+	
+I.II    Basic commands
+----------------------------------------------
+Basic commands of MyllyBot include:
+	
+    !addcmd - Adds 3rd party command to the bot
+    !commands - Prints all commands of the bot
+    !sql - Run SQL clause
+    !lastur - Prints out the last URL mentioned
+	
+	
+    
+II      3rd party commands
+----------------------------------------------
+----------------------------------------------
+MyllyBot can use 3rd party commands to create
+content for the IRC channel. Examples of the 
+3rd party commands can be found from 
+example_commands directory. These commands 
+are run anywhere in the world wide web and the
+output is returned to the MyllyBot to print 
+to the IRC channel. 
+
+Adding 3rd party commands to the MyllBot is 
+super easy. Just use !addcmd command and the
+command is online:
+
+Adding can be done in the IRC channel the bot is
+currently connected by typing:
+
+    !addcmd <command> <url>
+	
+    where
+	
+    <command> = Name of the command to use in 
+                the IRC channel. For example 
+                <command> = youtube - can be 
+                accessed with !youtube in IRC
+
+    <url>     = URL to PHP file which handles
+                the request. For example 
+                http://myllyserver.com/youtube.php
+
+                
+                
+                
+III     Web interface
+----------------------------------------------
+----------------------------------------------
+To be done.
+
+
+
+IV      Other stuff
+----------------------------------------------
+----------------------------------------------
+Feel free to contribute!
+
+BASED ON Ak-Bot Version 1.0 - Written by greybird - 2004 - startx@aknetwork.org
