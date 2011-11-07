@@ -102,13 +102,22 @@ class MyllyBot {
     {
         if($this->debug === 1)
         {
+            /* Timestamp generation */
+            list($usec, $sec) = explode(" ",microtime());
+            $string = ((float)$usec + (float)$sec);
+
+            $string2 = explode(".", $string);
+
+            $timestamp = date("d-m-Y H:i:s", $string2[0]).":".$string2[1];
+        
             if(is_array($s))
             {
+                echo $timestamp " - ";
                 print_r($s);
             }
             else
             {
-                echo $s . "\n";
+                echo $timestamp . " - " . $s . "\n";
             }
         }
     }
