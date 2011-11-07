@@ -392,7 +392,7 @@ class MyllyBot {
 	##---- PARSE DATA FUNCTION Parses the data that was just sent - i.e. checks for messages
 	function parse_data()
 	{
-		if(isset($this->data['sent_to']) && $this->data['sent_to']==$this->serverchannel AND $this->data['action'] == 'TRUE')
+		if(isset($this->data['sent_to']) && ( array_search($this->data['sent_to'], (array)$this->serverchannel) !== false ) AND $this->data['action'] == 'TRUE')
 		{
 			if($this->data['message_action'][0] == '!')
 			{
@@ -423,6 +423,9 @@ class MyllyBot {
 						}
 						else
 						{
+							if(!isset($retval)) {
+								$retval = '';
+							}
 							$retval2 = $vars.$retval;
 						}
 
@@ -441,11 +444,13 @@ class MyllyBot {
 					else
 					{
 						$command = $this->data['message'];
-						$vars = "";
+						if(!isset($vars) {
+							$vars = "";
+						}
 					}
 					$retval = $this->handle_function($command, $vars);
 				}
-				
+
 				$retval = trim($retval);
 				$retval = explode("\n", $retval);
 				foreach($retval as $rivi)
@@ -467,7 +472,7 @@ class MyllyBot {
 
 		if( $this->data['ping'] == 'PING')
 		{
-			//keep mysql connection alive... :)
+			//keep mysql connection alive...
 			$yksi = mysql_fetch_row(mysql_query("select 1"));
 			
 			$this->send("PONG ".$this->data['action']);
@@ -476,8 +481,13 @@ class MyllyBot {
 			if($this->first_ping == 1)
 			{
 				/* Join after first ping */
-                $this->debug_msg("Joining channel");
-				$this->send("JOIN ".$this->serverchannel, false);
+				if(is_string($this->serverchannel)) {
+					$this->serverchannel = (array)$this->serverchannel;
+				}
+				foreach($this->serverchannel as $channel) {
+					$this->send("JOIN ".$channel, false);
+					$this->debug_msg("Joining channel $channel");
+				}
 				$this->first_ping = 0;
 			}
 		}
@@ -566,6 +576,8 @@ class MyllyBot {
 		}
 	}
 
+
+	/* TODO: More clever solution */
 	function calculate($vars)
 	{
 		$banned = array('select', 'from', 'drop', ';', 'delimiter', 'where', '#', '--', 'into', 'update', '/0');
@@ -601,7 +613,7 @@ class MyllyBot {
         
 		if(count($vars) != 2)
 		{
-			return ("Usage: <command> <url (with http)>");
+			return ("Usage: <command> <url (with http://)>");
 		}
         
 		$command = mysql_real_escape_string($vars[0]);
