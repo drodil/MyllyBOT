@@ -5,12 +5,6 @@
 
 */
 
-/* Simple TODO list:
-	- Multiple channel support
-	- Debugging information output
-	- Installation script for SQL databases
-*/
-
 if(isset($_GET['showsrc'])) {
 	highlight_file();
 }
