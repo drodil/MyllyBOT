@@ -321,11 +321,11 @@ class MyllyBot {
 
 			$this->data['action'] = "TRUE";
 			$this->data['message_action'] = $maction[0];
-			$this->data['message_target'] = $maction[1];
+			@$this->data['message_target'] = $maction[1];
 			@$this->data['message_target2'] = $maction[2];
 			$this->data['message_action_text'] = str_replace(" ", "%20", substr($mfullaction, 1));
 			$this->data['message_action_text_plain'] = str_replace("%20", " ", $this->data['message_action_text']);
-			$this->data['message_action_text_plain_with_params'] = substr(str_replace($maction[0], "", str_replace($maction[1], "", $mfullaction)), 2);
+			@$this->data['message_action_text_plain_with_params'] = substr(str_replace($maction[0], "", str_replace($maction[1], "", $mfullaction)), 2);
 		}
 		else if((preg_match("/http/i",$this->data['message']) || preg_match("/www/i",$this->data['message'])) && strcasecmp($this->data['from'], $this->botnick) != 0)
 		{
@@ -441,6 +441,7 @@ class MyllyBot {
 					else
 					{
 						$command = $this->data['message'];
+						$vars = "";
 					}
 					$retval = $this->handle_function($command, $vars);
 				}
