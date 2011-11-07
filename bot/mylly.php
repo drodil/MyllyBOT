@@ -15,7 +15,7 @@
 	/* IRC server settings */
     $bot['serveraddress'] = "";
     $bot['serverport'] = "6667";
-    $bot['serverchannel'] = "";
+    $bot['serverchannel'] = array("#channel1", "#channel2"); //or just a "#singlechannel"
  
 	/* Database settings */
     $bot['database_host'] = "";
