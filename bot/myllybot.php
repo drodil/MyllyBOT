@@ -5,7 +5,8 @@
 
 */
 
-if(isset($_GET['showsrc'])) {
+if(isset($_GET['showsrc'])) 
+{
 	highlight_file();
 }
 
@@ -107,7 +108,7 @@ class MyllyBot {
             }
             else
             {
-                echo $s;
+                echo $s . "\n";
             }
         }
     }
@@ -126,7 +127,7 @@ class MyllyBot {
 
 		if (!$this->fp)
 		{
-			$this->debug_msg("There was an error in connecting to ".$this->serveraddress."\n");
+			$this->debug_msg("There was an error in connecting to " . $this->serveraddress);
 			exit;
 		}
 		else
@@ -582,10 +583,12 @@ class MyllyBot {
 	function addcmd($vars)
 	{
 		$vars = explode(" ", $vars);
+        
 		if(count($vars) != 2)
 		{
 			return ("Usage: <command> <url (with http)>");
 		}
+        
 		$command = mysql_real_escape_string($vars[0]);
 		$path = mysql_real_escape_string($vars[1]);
 		$query = "SELECT * FROM commands WHERE command = '$command'";
@@ -601,7 +604,13 @@ class MyllyBot {
 			$query = "INSERT INTO commands (command, path) values ('$command', '$path')";
 			$result = mysql_query($query);
 			if($result)
-			return ("Done.");
+            {
+                return ("Done.");
+            }
+            else
+            {
+                $this->debug_msg(mysql_error() . "\n Query: " .$query);
+            }
 		}
 	}
 
@@ -664,6 +673,7 @@ class MyllyBot {
 			}
 			else 
 			{
+                $this->debug_msg(mysql_error() . "\nQuery: ". $query);
 				echo mysql_error()."\nQuery: ".$query."\n";
 			}
 		}
