@@ -112,7 +112,7 @@ class MyllyBot {
         
             if(is_array($s))
             {
-                echo $timestamp " - ";
+                echo $timestamp . " - ";
                 print_r($s);
             }
             else
