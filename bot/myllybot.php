@@ -19,6 +19,7 @@ class MyllyBot {
 	var $data;
 
 	var $log;
+    var $debug = 0;
 
 	var $lecture;
 	var $lecture_pause;
@@ -79,8 +80,13 @@ class MyllyBot {
 			$this->http_proxy_port = $bot['http_proxy_port'];
 			$this->http_proxy_userpwd = $bot['http_proxy_userpwd'];
 		}
+        
+        $this->debug = $bot['debug'];
 
 		$this->version_message = "BASED ON Ak-Bot Version 1.0 - Written by greybird - 2004 - startx@aknetwork.org";
+        
+        $this->debug_msg("Startup settings:");
+        $this->debug_msg($bot);
 
 		set_time_limit(0); #sets the timeout limit of the script
 
@@ -91,6 +97,21 @@ class MyllyBot {
 		$this->connect();
 	}
 
+    function debug_msg($s)
+    {
+        if($this->debug === 1)
+        {
+            if(is_array($s))
+            {
+                print_r($s);
+            }
+            else
+            {
+                echo $s;
+            }
+        }
+    }
+    
 	##-------------------------------------------- DATABASE CONNECT FUNCTION Connects the bot to the database --------------------------------------------
 	function database_connect()
 	{
@@ -105,7 +126,7 @@ class MyllyBot {
 
 		if (!$this->fp)
 		{
-			echo "There was an error in connecting to ".$this->serveraddress."\n";
+			$this->debug_msg("There was an error in connecting to ".$this->serveraddress."\n");
 			exit;
 		}
 		else
@@ -142,7 +163,8 @@ class MyllyBot {
 	}
 
 	##-------------------------------------------- DISCONNECT FUNCTION Disconnects the bot from the server --------------------------------------------
-	function disconnect(){
+	function disconnect()
+    {
 		$this->send("QUIT :".$this->version_message);
 		if($this->fp)
 		{
@@ -178,6 +200,7 @@ class MyllyBot {
 			if( $this->last_pong_sent+60*5 < time() && !($this->fp) )
 			{
 				$this->first_ping = 1;
+                $this->debug_msg("Timed out: Reconnecting..");
 				$this->reconnect();
 			}
 
@@ -272,6 +295,9 @@ class MyllyBot {
 		@$this->data['sent_to'] = $params[2];
 		@$this->data['ping'] = $params[0];
 		@$this->data['message'] = substr($message, 4);
+        
+        $this->debug_msg("Processing data:");
+        $this->debug_msg($this->data);
 
 		if($this->data['message'][0] == "!")
 		{
@@ -434,6 +460,7 @@ class MyllyBot {
 			if($this->first_ping == 1)
 			{
 				/* Join after first ping */
+                $this->debug_msg("Joining channel");
 				$this->send("JOIN ".$this->serverchannel, false);
 				$this->first_ping = 0;
 			}
@@ -446,10 +473,12 @@ class MyllyBot {
 	{
 		if($without_queue)
 		{
+            $this->debug_msg("Sending: " . $data);
 			fputs($this->fp, $data."\r\n");
 		}
 		else
 		{
+            $this->debug_msg("Queuing: " . $data);
 			array_push($this->msg_queue, $data);
 		}
 	}

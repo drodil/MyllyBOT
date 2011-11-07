@@ -3,6 +3,7 @@
     include("myllybot.php");
  
     $bot['log'] = 1;
+    $bot['debug'] = 0;
  
 	/* Bot settings */
     $bot['botnick'] = "";
