@@ -3,13 +3,26 @@
 # Simple bash script for quick installation of MyllyBot
 # Work in progress.
 
+#default values
+
 idir="/var/MyllyBot"
 cdir="/var/MyllyBot/config"
 droot="/var/www/MyllyBot"
-mysqluser=""
-mysqlpwd=""
-mysqldb=""
+sqlhost="localhost"
 
+bname="MyllyBot"
+bident="Myle"
+brealname="THEMyllyBot"
+bserver="irc.cs.hut.fi"
+bport="6667"
+botchannels=""
+botproxy=""
+botproxyport=""
+botproxyuser=""
+
+btimezone="Europe/Helsinki"
+
+# Printing logo function
 print_logo()
 {
     clear
@@ -32,23 +45,12 @@ print_logo()
 print_logo
 
 # Check if mysqld is running
-if ! ps -C mysqld > /dev/null
+if ps ax | grep -v grep | grep 'mysqld' > /dev/null
 then
-    mysqlv = $(mysql -V)
-    echo "Running MySQL version is: $mysqlv"
+    echo "MySQL found. Continuing.."
 else
-    echo "Could not find MySQL running"
-    # exit 1
-fi
-
-# Check if PHP is installed
-if [ ! -z "$(php -i | awk '/PHP version/')" ];
-then
-    phpversion = $(php -v)
-    echo "Running PHP version: $phpversion"
-else
-    echo "Could not find PHP"
-    # exit 1
+    echo "Could not find MySQL running. Aborting.."
+    #exit 1
 fi
 
 # Check for installation place
@@ -93,6 +95,15 @@ fi
 
 # MySQL settings
 echo ""
+echo -n "MySQL host (default: $sqlhost) > "
+read mysqlhost
+
+if [ -z "$mysqlhost" ]
+then
+    mysqlhost="$sqlhost"
+fi
+
+echo ""
 echo -n "MySQL username for MyllyBot > "
 read mysqluser
 
@@ -104,10 +115,100 @@ echo ""
 echo -n "MySQL database for MyllyBot > "
 read mysqldb
 
-# TODO: Bot administrator settings to be asked
+# Bot settings
+echo ""
+echo -n "Bot name (default: $bname) > "
+read botname
 
-# TODO: Bot basic settings can be asked here too
+if [ -z "$botname" ]
+then
+    botname="$bname"
+fi
 
+echo ""
+echo -n "Bot password > "
+read botpwd
+
+echo ""
+echo -n "Bot ident (default: $bident) > "
+read botident
+
+if [ -z "$botident" ]
+then
+    botident="$bident"
+fi
+
+echo ""
+echo -n "Bot real name (default: $brealname) > "
+read botrealname
+
+if [ -z "$botrealname" ]
+then
+    botrealname="$brealname"
+fi
+
+echo ""
+echo -n "IRC server (default: $bserver) > "
+read botserver
+
+if [ -z "$botserver" ]
+then
+    botserver="$bserver"
+fi
+
+echo ""
+echo -n "IRC server port (default: $bport) > "
+read botport
+
+if [ -z "$botport" ]
+then
+    botport="$bport"
+fi
+
+# Proxy settings
+echo ""
+echo -n "Proxy server > "
+read botproxy
+
+if [ ! -z "$botproxy" ]
+then
+    echo ""
+    echo -n "Proxy server port > "
+    read botproxyport
+    
+    echo ""
+    echo -n "Proxy username/password (format username:password) > "
+    read botproxyuser
+fi
+
+# Channel settings
+echo ""
+echo "Type in bot channels to join (type empty to quit):"
+newchan="#myllybot"
+i=1
+while [ ! -z "$newchan"  ]
+do
+    echo -n "Enter channel ($i) > "
+    read newchan
+    
+    if [ ! -z "$newchan" ]
+    then
+        botchannels[$i-1]=$newchan
+        i=`expr $i + 1`
+    fi
+done
+
+# Timezone settings
+echo ""
+echo -n "Timezone (default: $btimezone) > "
+read bottimezone
+
+if [ -z "$bottimezone" ]
+then
+    bottimezone="$btimezone"
+fi
+
+# Print the configuration
 print_logo
 echo "SELECTED CONFIGURATION:"
 echo ""
@@ -121,18 +222,45 @@ else
     echo "Bot WebUI will not be installed."
 fi
 
+echo ""
+echo "MySQL host: $mysqlhost"
 echo "MySQL user: $mysqluser"
 echo "MySQL password: $mysqlpwd"
 echo "MySQL database: $mysqldb"
 
 echo ""
+echo "Bot name: $botname"
+echo "Bot password: $botpwd"
+echo "Bot ident: $botident"
+echo "Bot real name: $botrealname"
+
+echo ""
+echo "IRC server: $botserver"
+echo "IRC server port: $botport"
+if [ ! -z "$botproxy" ]
+then
+    echo "Proxy: $botproxy:$botproxyport"
+    echo "Proxy username:password: $botproxyuser"
+fi
+
+echo ""
+echo "Bot channels:"
+for chan in ${botchannels[@]}
+do
+    echo $chan
+done
+
+echo ""
+echo "Timezone: $bottimezone"
+
+echo ""
 echo "----------------------------------------"
 echo ""
-echo -n "Is this correct (y/N)? > "
+echo -n "Is this correct (Y/n)? > "
 read correct
 
 # If correct, start installation..
-if [ "$correct" == "y" ]
+if [ "$correct" != "n" ]
 then
     echo "----------------------------------------"
     echo ""
@@ -144,9 +272,45 @@ then
     conffile="$confdir/bot_config.php"
     
     echo "<?php" > $conffile
-    echo "  \$mysql_user = \"$mysqluser\";" >> $conffile
-    echo "  \$mysql_pwd = \"$mysqlpwd\";" >> $conffile
-    echo "  \$mysql_db = \"$mysqldb\";" >> $conffile
+    echo "" >> $conffile
+    echo "      \$bot['log'] = 1;" >> $conffile
+    echo "      \$bot['debug'] = 0;" >> $conffile
+    echo "" >> $conffile
+    echo "      \$bot['database_host'] = \"$mysqlhost\";" >> $conffile
+    echo "      \$bot['database_user'] = \"$mysqluser\";" >> $conffile
+    echo "      \$bot['database_password'] = \"$mysqlpwd\";" >> $conffile
+    echo "      \$bot['database_name'] = \"$mysqldb\";" >> $conffile
+    echo "" >> $conffile
+    echo "      \$bot['botnick'] = \"$botname\";" >> $conffile
+    echo "      \$bot['botpassword'] = \"$botpwd\";" >> $conffile
+    echo "      \$bot['botident'] = \"$botident\";" >> $conffile
+    echo "      \$bot['botrealname'] = \"$botrealname\";" >> $conffile
+    echo "" >> $conffile
+    echo "      \$bot['serveraddress'] = \"$botserver\";" >> $conffile
+    echo "      \$bot['serverport'] = \"$botport\";" >> $conffile
+    echo -n "      \$bot['serverchannel'] = array(" >> $conffile
+    
+    tmp=1
+    for chan in ${botchannels[@]}
+    do
+        if [ $tmp -eq 1 ] 
+        then
+            echo -n "\"$chan\"" >> $conffile
+            tmp=0
+        else
+            echo -n ", \"$chan\"" >> $conffile
+        fi
+    done
+    echo ");" >> $conffile
+    
+    echo "" >> $conffile
+    echo "      \$bot['http_proxy'] = \"$botproxy\";" >> $conffile
+    echo "      \$bot['http_proxy_port'] = \"$botproxyport\";" >> $conffile
+    echo "      \$bot['http_prxy_userpwd'] = \"$botproxyuser\";" >> $conffile
+    
+    echo "" >> $conffile
+    echo "      \$bot['timezone'] = \"$bottimezone\";" >> $conffile
+    
     echo "?>" >> $conffile
     
     echo "<?php include('$conffile'); ?>" > conf_inc.php
@@ -161,8 +325,11 @@ then
     
     # Create bot installation dir
     mkdir -p $installdir
-    mv -f conf_inc.php $installdir
+    cp -f conf_inc.php $installdir
     cp -R ./bot/* $installdir
+    
+    # Remove temp conf_inc.php
+    rm -rf conf_inc.php
     
     # TODO: Create PHP script to create databases and run it
     
