@@ -1,6 +1,5 @@
 TODO LIST
 
-    - Multiple channel support
     - Debugging information output
     - Installation script for SQL databases
     - Multiple server support
@@ -13,3 +12,4 @@ TODO LIST
     - Random quote each morning :)
     - RSS feed polling
     - Web interface - Admin panel
+    - Private message handling (login etc.)
