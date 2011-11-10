@@ -329,6 +329,9 @@ then
     cp -f conf_inc.php $installdir
     cp -R ./bot/* $installdir
     
+    # Run database installation script to create tables
+    php database/db_install.php
+    
     # Remove temp conf_inc.php
     rm -rf conf_inc.php
     
