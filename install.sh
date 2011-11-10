@@ -273,8 +273,10 @@ then
     
     echo "<?php" > $conffile
     echo "" >> $conffile
-    echo "      \$bot['log'] = 1;" >> $conffile
-    echo "      \$bot['debug'] = 0;" >> $conffile
+    echo "      \$bot['console_output'] = true;" >> $conffile
+    echo "      \$bot['database_debug'] = false;" >> $conffile
+    echo "      \$bot['file_debug'] = false;" >> $conffile
+    echo "      \$bot['file_debug_location'] = \"\";" >> $conffile
     echo "" >> $conffile
     echo "      \$cfg['database_host'] = \"$mysqlhost\";" >> $conffile
     echo "      \$cfg['database_user'] = \"$mysqluser\";" >> $conffile

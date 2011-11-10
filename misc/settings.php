@@ -5,16 +5,16 @@
     
     class SettingsProvider
     {
-        var $values = array();
-        var $link;
+        private $values = array();
+        private $link;
         
         /* Class constructor 
          * Connects to database and the settings values to memory 
          */
         function __construct()
         {
-            $link = mysql_connect($cfg['database_host'], $cfg['database_user'], $cfg['database_password']);
-            if (!$link) 
+            $this->link = mysql_connect($cfg['database_host'], $cfg['database_user'], $cfg['database_password']);
+            if (!$this->link) 
             {
                 echo 'Settings class error: ' . mysql_error();
                 return;
@@ -34,7 +34,7 @@
             {
                 while($row = mysql_fetch_array($result))
                 {
-                    $values[$row['key']] = $row['value'];
+                    $this->values[$row['key']] = $row['value'];
                 }
             }
         }
@@ -44,20 +44,20 @@
          */
         function __destruct()
         {
-            if($link)
+            if($this->link)
             {
-                mysql_close($link);
+                mysql_close($this->link);
             }
         }
         
         /* Returns value of the given key 
          * Return values: Value on success, NULL on failure
          */
-        function getValue($key)
+        public function getValue($key)
         {
-            if($values[$key])
+            if($this->values[$key])
             {
-                $return $values[$key];
+                $return $this->values[$key];
             }
             
             return NULL;
@@ -66,7 +66,7 @@
         /* Sets value for given key 
          * Return values: TRUE on success, FALSE on failure
          */
-        function setValue($key, $value)
+        public function setValue($key, $value)
         {
             if($key && $value)
             {
@@ -75,7 +75,7 @@
                 $value = mysql_real_escape_string($value);
             
                 mysql_query("UPDATE settings SET value = '".$value."' WHERE key = '".$key."'");
-                $values[$key] = $value;
+                $this->values[$key] = $value;
                 return TRUE;
             }
             

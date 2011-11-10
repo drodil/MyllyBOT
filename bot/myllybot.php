@@ -2,60 +2,69 @@
 /* MyllyBOT - Simple PHP IRC bot based on AK-Bot version 1.0 - Written by greybird - 2004 - startx@aknetwork.org 
 
    Original AK-Bot source code http://forums.devnetwork.net/viewtopic.php?t=16878
-
 */
+
+require_once('logger.php');
+require_once('settings.php');
 
 if(isset($_GET['showsrc'])) 
 {
 	highlight_file();
 }
 
-class MyllyBot {
+class MyllyBot 
+{
+    // Sockets
+	private $lfp = NULL;
+	private $rfp = NULL;
 
-	var $fp = NULL;
-	var $lfp = NULL;
-	var $rfp = NULL;
+    // Data variables
+	private $rawdata;
+	private $data;
 
-	var $rawdata;
-	var $data;
+    // Console output on/off
+	private $console_output;
 
-	var $log;
-    var $debug = 0;
+    // Bot setup
+	private $botnick;
+	private $botpassword;
+	private $botident;
+	private $botrealname;
+	private $localhost;
+	private $quit_message;
 
-	var $lecture;
-	var $lecture_pause;
+    // IRC server settings
+	private $serveraddress;
+	private $serverport;
+	private $serverchannel;
 
-	var $botnick;
-	var $botpassword;
-	var $botident;
-	var $botrealname;
-	var $localhost;
-	var $quit_message;
-
-	var $serveraddress;
-	var $serverport;
-	var $serverchannel;
-
-	var $database_host;
-	var $database_user;
-	var $database_password;
-	var $database_name;
+    // Database settings
+	private $database_host;
+	private $database_user;
+	private $database_password;
+	private $database_name;
+    private $db_link;
 	
-	var $http_proxy = "";
-	var $http_proxy_port = "";
-	var $http_proxy_userpwd = "";
+    // HTTP proxy settings
+	private $http_proxy = "";
+	private $http_proxy_port = "";
+	private $http_proxy_userpwd = "";                   
 
-	var $lasturl = "No URLs in this session";
+	private $lasturl = "No URLs in this session";       // Last URL in this session (to be removed)
 
-	var $msg_queue = array();
-	var $last_msg_time = 0;
-	var $last_pong_sent;
-	var $first_ping = 1;
-
-	##-------------------------------------------- CLASS CONSTRUCTOR --------------------------------------------
-	function MyllyBot($bot)
+	private $msg_queue = array();                       // Message queue (to be removed)
+	private $last_msg_time = 0;                         // Time when the last msg was received
+	private $last_pong_sent;                            // Timestamp of the last pong
+	private $first_ping = 1;                            // First ping check
+    
+    private $logger;                                    // Logger object
+    private $settings;                                  // SettingsProvider object
+    
+    /* Class constructor */
+	function __construct($bot)
 	{
-		$this->log = $bot['log'];
+        /* Initial setup */
+		$this->console_output = $bot['console_output'];
 		$this->last_pong_sent = time();
 
 		$this->rfp = NULL;
@@ -81,24 +90,47 @@ class MyllyBot {
 			$this->http_proxy_port = $bot['http_proxy_port'];
 			$this->http_proxy_userpwd = $bot['http_proxy_userpwd'];
 		}
+ 
+        /* Create objects for logging and settings asking */
+        $logger = new Logger($bot['database_debug'], $bot['file_debug'], $bot['file_debug_location']);
+        $settings = new SettingsProvider();
         
-        $this->debug = $bot['debug'];
-
 		$this->version_message = "BASED ON Ak-Bot Version 1.0 - Written by greybird - 2004 - startx@aknetwork.org";
         
-        $this->debug_msg("Startup settings:");
-        $this->debug_msg($bot);
+        $this->console_msg("Startup settings:");
+        $this->console_msg($bot);
 
-		set_time_limit(0); #sets the timeout limit of the script
+		set_time_limit(0); // sets the timeout limit of the script
 
-		#connects to the database
+		// connects to the database
 		$this->database_connect();
 
-		#handles the connection
+		// handles the connection
 		$this->connect();
 	}
     
-    function log_timestamp()
+    /* Bot destructor function closes all connections 
+     * and shuts down */
+    function __destruct()
+    {
+		if($this->fp)
+		{
+			fclose($this->fp);
+		}
+
+		if($this->lfp)
+		{
+			fclose($this->lfp);
+		}
+        
+        if($this->db_link)
+        {
+            mysql_close($this->db_link);
+        }
+    }
+    
+    /* Bot output timestamp generation */
+    private function console_timestamp()
     {
         /* Timestamp generation */
         list($usec, $sec) = explode(" ",microtime());
@@ -109,16 +141,18 @@ class MyllyBot {
         return date("d-m-Y H:i:s", $string2[0]).":".$string2[1];
     }
 
-    function debug_msg($s)
+    /* Bot output message to the console when running (as in log) */
+    private function console_msg($s)
     {
-        if($this->debug === 1)
+        if($this->console_output == true)
         {
-            $timestamp = $this->log_timestamp();
+            $timestamp = $this->console_timestamp();
             
             if(is_array($s))
             {
                 echo $timestamp . " - ";
                 print_r($s);
+                echo "\n";
             }
             else
             {
@@ -127,21 +161,33 @@ class MyllyBot {
         }
     }
     
-	##-------------------------------------------- DATABASE CONNECT FUNCTION Connects the bot to the database --------------------------------------------
-	function database_connect()
+	/* Connects to database - obvious */
+	private function database_connect()
 	{
-		$db = mysql_connect($this->database_host, $this->database_user, $this->database_password);
-		mysql_select_db($this->database_name, $db);
+		$this->db_link = mysql_connect($this->database_host, 
+                                       $this->database_user, 
+                                       $this->database_password);
+                                       
+        if($this->db_link)
+        {
+            mysql_select_db($this->database_name, $this->db_link);
+        }
+        else
+        {
+            $this->console_msg("Could not connect to database at " . $this->database_host);
+            $logger->log("BOT: Unable to connect to database");
+        }
 	}
 
-	##-------------------------------------------- CONNECT FUNCTION Connects the bot to the server --------------------------------------------
-	function connect()
+    /* Connects bot to the IRC server */
+	private function connect()
 	{
 		$this->fp = fsockopen($this->serveraddress, $this->serverport);
 
 		if (!$this->fp)
 		{
-			$this->debug_msg("There was an error in connecting to " . $this->serveraddress);
+			$this->console_msg("There was an error in connecting to " . $this->serveraddress);
+            $logger->log("BOT: Error connecting to " . $this->serveraddress . ":" . $this->serverport);
 			exit;
 		}
 		else
@@ -158,9 +204,10 @@ class MyllyBot {
 		}
 	}
 
-	##-------------------------------------------- RECONNECT FUNCTION --------------------------------------------
-	function reconnect()
+    /* In case of problems reconnects the bot to the IRC server */
+	private function reconnect()
 	{
+        $logger->log("BOT: Reconnecting to " . $this->serveraddress . ":" . $this->serverport);
 		if($this->fp)
 		{
 			fclose($this->fp);
@@ -178,27 +225,17 @@ class MyllyBot {
 		$this->connect();
 	}
 
-	##-------------------------------------------- DISCONNECT FUNCTION Disconnects the bot from the server --------------------------------------------
-	function disconnect()
+    /* Disconnect and shut down all connections */
+	private function disconnect()
     {
-		$this->send("QUIT :".$this->version_message);
-		if($this->fp)
-		{
-			fclose($this->fp);
-			$this->fp = NULL;
-		}
-
-		if($this->lfp)
-		{
-			fclose($this->lfp);
-			$this->fp = NULL;
-		}
-
-		exit();
+        $this->send("QUIT :".$this->version_message);
+        $logger->log("BOT: Disconnecting and shutting down");
+		
+        $this->run = false;
 	}
 
-	##-------------------------------------------- RECEIVE FUNCTION Receives all data from connection --------------------------------------------
-	function receive()
+	/* Receives and passes data from the server */
+	private function receive()
 	{
 		if($this->fp)
 		{
@@ -216,7 +253,7 @@ class MyllyBot {
 			if( $this->last_pong_sent+60*5 < time() && !($this->fp) )
 			{
 				$this->first_ping = 1;
-                $this->debug_msg("Timed out: Reconnecting..");
+                $this->console_msg("Timed out: Reconnecting..");
 				$this->reconnect();
 			}
 
@@ -226,11 +263,6 @@ class MyllyBot {
 			{
 				$this->process_data();
 				$this->parse_data();
-
-				if($this->log)
-				{
-					$this->logging();
-				}
 			}
 
 			if(count($this->msg_queue) > 0 && $this->last_msg_time+1.5 < microtime(true))
@@ -245,20 +277,30 @@ class MyllyBot {
 		sleep(10);
 		$this->reconnect();
 	}
+    
+    /* Shuts the bot down */
+    public function shut_down()
+    {
+        $logger->log("BOT: Shutting down by the user");
+        $this->disconnect();
+    }
 
-	function log($param_arr)
+    /* Actually saves the IRC log to database */
+	private function irc_log($param_arr)
 	{
-		$query = "INSERT INTO log (".implode(', ',array_keys($param_arr)).") VALUES (\"".implode('", "',array_values($param_arr))."\")";
+		$query = "INSERT INTO irc_log (".implode(', ',array_keys($param_arr)).") VALUES (\"".implode('", "',array_values($param_arr))."\")";
 		$result = mysql_query($query);
 	}
 
-	function log_events($line_array)
+    /* Handles incoming IRC events */
+	private function log_irc_events($line_array)
 	{
 		$event_type = $line_array[1];
 		$rest = array_slice($line_array, 3);
 
 		switch($event_type)
 		{
+            /* TODO: Channel where the event is coming from */
 			case 'PRIVMSG':
 			$gg1 = explode('!', $line_array[0]);
 			$gg2 = explode('@', $gg1[1]);
@@ -274,7 +316,7 @@ class MyllyBot {
 				$msg = substr(implode(' ', $rest), 1);
 			}
 
-			$this->log(array(
+			$this->irc_log(array(
 							 'data_type' => $event_type,
 							 'nick' => substr($gg1[0],1),
 							 'ident' => $gg2[0],
@@ -290,12 +332,12 @@ class MyllyBot {
 			break;
 		}
 	}
-	##-------------------------------------------- PROCESS DATA FUNCTION Processes the data sent into an array or useful items
-	##--------------------------------------------
-	function process_data()
+    
+    /* Process the raw data from the server */
+	private function process_data()
 	{
 		$params = explode(" ", $this->rawdata);
-		$this->log_events($params);
+		$this->log_irc_events($params);
 
 		@$message = str_replace("$params[0]", "", $this->rawdata);
 		@$message = str_replace("$params[1]", "", $message);
@@ -312,8 +354,8 @@ class MyllyBot {
 		@$this->data['ping'] = $params[0];
 		@$this->data['message'] = substr($message, 4);
         
-        $this->debug_msg("Processing data:");
-        $this->debug_msg($this->data);
+        $this->console_msg("Processing data:");
+        $this->console_msg($this->data);
 
 		if($this->data['message'][0] == "!")
 		{
@@ -345,19 +387,8 @@ class MyllyBot {
 		}
 	}
 
-	##-------------------------------------------- LOGGING FUNCTION Logs the data --------------------------------------------
-	function logging()
-	{
-		if(!$this->lfp)
-		{
-			$this->lfp = fopen('log.txt', 'w');
-		}
-
-		$timestamp = $this->log_timestamp();
-		fputs($this->lfp, $timestamp . " - " . $this->rawdata."\n");
-	}
-
-	function handle_function($command, $vars='')
+    /* Handles the command functions */
+	private function handle_function($command, $vars='')
 	{
 		switch($command)
 		{
@@ -384,14 +415,15 @@ class MyllyBot {
 		}
 	}
 
-	##---- RETURNS last URL pasted to channel
+    /* Returns the last URL seen in this session */
 	function last_url()
 	{
+        // TODO : Move this handling to the database and also check for channel
 		return $this->lasturl;
 	}
 
-	##---- PARSE DATA FUNCTION Parses the data that was just sent - i.e. checks for messages
-	function parse_data()
+	/* Yet another parser function (?) */
+	private function parse_data()
 	{
 		if(isset($this->data['sent_to']) && ( array_search($this->data['sent_to'], (array)$this->serverchannel) !== false ) AND $this->data['action'] == 'TRUE')
 		{
@@ -482,41 +514,46 @@ class MyllyBot {
 			if($this->first_ping == 1)
 			{
 				/* Join after first ping */
-				if(is_string($this->serverchannel)) {
+				if(is_string($this->serverchannel)) 
+                {
 					$this->serverchannel = (array)$this->serverchannel;
 				}
-				foreach($this->serverchannel as $channel) {
+                
+				foreach($this->serverchannel as $channel) 
+                {
+                    // If this is the first ping, join channel(s)
 					$this->send("JOIN ".$channel, false);
-					$this->debug_msg("Joining channel $channel");
+					$this->console_msg("Joining channel $channel");
 				}
+                
 				$this->first_ping = 0;
 			}
 		}
 	}
 
-
-	##-------------------------------------------- SEND FUNCTION Sends any data to the server --------------------------------------------
-	function send($data, $without_queue = false)
+    /* Handles sending data to the server */
+	private function send($data, $without_queue = false)
 	{
 		if($without_queue)
 		{
-            $this->debug_msg("Sending: " . $data);
+            $this->console_msg("Sending: " . $data);
 			fputs($this->fp, $data."\r\n");
 		}
 		else
 		{
-            $this->debug_msg("Queuing: " . $data);
+            $this->console_msg("Queuing: " . $data);
 			array_push($this->msg_queue, $data);
 		}
 	}
 
-	##-------------------------------------------- VERSION FUNCTION Shows bot version info --------------------------------------------
-	function version()
+    /* Sends bot version to the server */
+	private function version()
 	{
 		$this->send("NOTICE ".$this->data['from']." :".$this->version_message);
 	}
 
-	function echo_commands()
+    /* Echoes the commands */
+	private function echo_commands()
 	{
 		$commands = array('addcmd', 'sql', 'commands', 'lasturl');
 		$query = 'SELECT command from commands';
@@ -532,7 +569,8 @@ class MyllyBot {
 		return "Commands are: ".$commands;
 	}
 
-	function handle_odd_command($cmd, $vars = '')
+    /* Handles 3rd party commands */
+	private function handle_odd_command($cmd, $vars = '')
 	{
 		$query = 'SELECT path FROM commands WHERE command = "'.mysql_real_escape_string($cmd).'"';
 		$result = mysql_query($query);
@@ -577,9 +615,8 @@ class MyllyBot {
 		}
 	}
 
-
-	/* TODO: More clever solution */
-	function calculate($vars)
+	/* User SQL calculations are done here */
+	private function calculate($vars)
 	{
 		$banned = array('select', 'from', 'drop', ';', 'delimiter', 'where', '#', '--', 'into', 'update', '/0');
 		foreach($banned as $ban)
@@ -608,7 +645,8 @@ class MyllyBot {
 		}
 	}
 
-	function addcmd($vars)
+    /* Command adding */
+	private function addcmd($vars)
 	{
 		$vars = explode(" ", $vars);
         
@@ -637,12 +675,13 @@ class MyllyBot {
             }
             else
             {
-                $this->debug_msg(mysql_error() . "\n Query: " .$query);
+                $this->console_msg(mysql_error() . "\n Query: " .$query);
             }
 		}
 	}
 
-	function get_title($content)
+    /* Get title of a webpage: works (not) */
+	private function get_title($content)
 	{
 		$dada = stristr($content, '<title>'); //strip everything before this
 		$dada = stristr($dada, '</title>', true); //and after this
@@ -651,9 +690,11 @@ class MyllyBot {
 		return trim(html_entity_decode($dada));
 	}
 
-	function URL_log($url)
+    /* Logs URLs pasted to channel */
+    /* TODO: Channel awareness */
+	private function URL_log($url)
 	{
-		/* Fix regexp */
+		/* TODO: Fix regexp */
 		$ret_str = array();
 		$url = $url[0];
 		if(substr($url,0,4) != "http")
@@ -701,48 +742,9 @@ class MyllyBot {
 			}
 			else 
 			{
-                $this->debug_msg(mysql_error() . "\nQuery: ". $query);
+                $this->console_msg(mysql_error() . "\nQuery: ". $query);
 				echo mysql_error()."\nQuery: ".$query."\n";
 			}
-		}
-	}
-
-	##-------------------------------------------- HELP FUNCTION Displays help messages --------------------------------------------
-	function help()
-	{
-		/* TODO: Fixme */
-		if(!$this->data[message_target])
-		{ 
-			$this->send("PRIVMSG ".$this->data['from']." :Help File For ".$this->botnick);
-			$this->send("PRIVMSG ".$this->data['from']." :------------------------------");
-			$this->send("PRIVMSG ".$this->data['from']." : ");
-			$this->send("PRIVMSG ".$this->data['from']." : !op <nick>");
-			$this->send("PRIVMSG ".$this->data['from']." : !deop <nick>");
-			$this->send("PRIVMSG ".$this->data['from']." : !voice <nick>");
-			$this->send("PRIVMSG ".$this->data['from']." : !devoice <nick>");
-			$this->send("PRIVMSG ".$this->data['from']." : !kick <nick>");
-			$this->send("PRIVMSG ".$this->data['from']." : !mode <+/- mode>");
-			$this->send("PRIVMSG ".$this->data['from']." : !topic <topic>");
-			$this->send("PRIVMSG ".$this->data['from']." : !addquote <quote>");
-			$this->send("PRIVMSG ".$this->data['from']." : !adduser <nick> <userlevel>");
-			$this->send("PRIVMSG ".$this->data['from']." : !lecture <filename/pause/stop/start>");
-			$this->send("PRIVMSG ".$this->data['from']." : !quit");
-			$this->send("PRIVMSG ".$this->data['from']." : !google <search word?");
-			$this->send("PRIVMSG ".$this->data['from']." : !time <+/- time zone>");
-			$this->send("PRIVMSG ".$this->data['from']." : !8ball <question>");
-			$this->send("PRIVMSG ".$this->data['from']." : !userlevel");
-			$this->send("PRIVMSG ".$this->data['from']." : !quote <bash|user|from|last|number|random> <value> (note bash, last and random require no
-			<value>)");
-			$this->send("PRIVMSG ".$this->data['from']." : !base64 <encode|decode> <message to encode/decode>");
-			$this->send("PRIVMSG ".$this->data['from']." : !md5 <plaintext>");
-			$this->send("PRIVMSG ".$this->data['from']." : !rot13 <message>");
-			$this->send("PRIVMSG ".$this->data['from']." : !weather <zip code>");
-			$this->send("PRIVMSG ".$this->data['from']." : !version");
-			$this->send("PRIVMSG ".$this->data['from']." : !help");
-		}
-		else
-		{
-
 		}
 	}
 }

@@ -6,26 +6,43 @@
      
     class Logger
     {
-        var $link;
-        var $file_logging = false;
-        var $db_logging = false;
-        var $file_location = "";
-        var $file_handle = NULL;
+        private $link;
+        private $file_logging = false;
+        private $db_logging = false;
+        private $file_location = "";
+        private $file_handle = NULL;
     
         function __construct($dblog = false, $flog = false, $floc = "")
         {
-            $db_logging = $dblog;
-            $file_logging = $flog;
-            $file_location = $floc;
+            $this->db_logging = $dblog;
+            $this->file_logging = $flog;
+            $this->file_location = $floc;
         
-            if($db_logging)
+            if($this->db_logging)
             {
                 $this->connectDB();
             }
             
-            if($file_logging)
+            if($this->file_logging)
             {
-                $file_handle = fopen($file_location, 'a+');
+                $this->file_handle = fopen($file_location, 'a+');
+            }
+        }
+          
+        /* Class destructor
+         * Closes MySQL connection
+         * Destroys filehandle
+         */
+        function __destruct()
+        {
+            if($this->link)
+            {
+                mysql_close($this->link);
+            }
+            
+            if($this->file_handle)
+            {
+                fclose($this->file_handle);
             }
         }
         
@@ -33,8 +50,10 @@
          * DB class when it is done(?) */
         private function connectDB()
         {
-            $link = mysql_connect($cfg['database_host'], $cfg['database_user'], $cfg['database_password']);
-            if (!$link) 
+            $this->link = mysql_connect($cfg['database_host'], 
+                                        $cfg['database_user'], 
+                                        $cfg['database_password']);
+            if (!$this->link) 
             {
                 echo 'Logger class error: ' . mysql_error();
                 return;
@@ -48,56 +67,40 @@
                 return;
             }
         }
-        
-        /* Class destructor
-         * Closes MySQL connection
-         * Destroys filehandle
-         */
-        function __destruct()
-        {
-            if($link)
-            {
-                mysql_close($link);
-            }
-            
-            if($file_handle)
-            {
-                fclose($file_handle);
-            }
-        }
+
         
         /* Sets up the file logging if not entered in constructor */
-        function fileLogging($flog = false, $floc = "")
+        public function fileLogging($flog = false, $floc = "")
         {
-            $file_logging = $flog;
+            $this->file_logging = $flog;
             
-            if($file_logging)
+            if($this->file_logging)
             {
-                if($file_handle)
+                if($this->file_handle)
                 {
                     // Close existing handle just in case
-                    fclose($file_handle);
+                    fclose($this->file_handle);
                 }
                 
-                $file_location = $floc;
+                $this->file_location = $floc;
                 
-                $file_handle = fopen($file_location, 'a+');
+                $this->file_handle = fopen($this->file_location, 'a+');
             }
         }
         
         /* Sets up the database logging if not entered in the constructor */
-        function dbLogging($dbl = false)
+        public function dbLogging($dbl = false)
         {
-            $db_logging = $dbl;
+            $this->db_logging = $dbl;
             
-            if($db_logging && !($link))
+            if($this->db_logging && !($this->link))
             {
                 $this->connectDB();
             }
         }
     
         /* Actual logging function */
-        function log($msg)
+        public function log($msg)
         {
             if(!$msg)
             {
@@ -117,12 +120,12 @@
             
             $log .= "\n";
         
-            if($file_logging)
+            if($this->file_logging)
             {
-                fwrite($file_handle, $log);
+                fwrite($this->file_handle, $log);
             }
 
-            if($db_logging && $link)
+            if($this->db_logging && $this->link)
             {
                 mysql_query("INSERT INTO debug VALUES ('', '".$log."', NOW())";
             }

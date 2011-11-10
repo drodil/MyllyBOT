@@ -2,8 +2,11 @@
     /* Configuration of the bot when the installation is done
      * manually as in not using the installation script */
 
-    $bot['log'] = 1;
-    $bot['debug'] = 0;
+    /* Logging and debugging */
+    $bot['console_output'] = true;
+    $bot['database_debug'] = false;
+    $bot['file_debug'] = false;
+    $bot['file_debug_location'] = "";
      
     /* Bot settings */
     $bot['botnick'] = "";

@@ -34,14 +34,43 @@ commands
 I.I     Setting the environment
 ----------------------------------------------
 MyllyBot requires PHP, MySQL and CURL installed
-to the server. Easy installation:
+to the server. You have two options how to install
+the bot; either manually or using the installation
+bash script.
 
-    1. Set up the database (see myllybot.db)
-    2. Extract all the files to place you want 
-       to run the bot
-    3. Set up the bot name and other information
-       from mylly.php
-    4. Start the bot by typing 'php mylly.php'
+Installation with script:
+    1. Create new database and user for the it
+       with access rights at least to INSERT,
+       DELETE, UPDATE, SELECT, DROP, CREATE,
+       TRUNCATE accesses
+    2. Run installation script from the root
+       of the tree by ./install.sh and follow
+       the installation
+
+Manual installation:
+
+    1. Create new database and user for the it
+       with access rights at least to INSERT,
+       DELETE, UPDATE, SELECT, DROP, CREATE,
+       TRUNCATE accesses.
+    2. Set up bot_config.php to configure the bot
+       and copy it wherever you like
+    3. Change the values of both bot/conf_inc.php
+       and www/conf_inc.php to point to the 
+       bot_config.php
+    4. Copy all the files from bot/ directory 
+       to the place you want to run the bot
+    5. If you want to install WEB UI copy all the
+       files from www/ to the web server directory
+    6. Copy the contents of misc/ directory in both
+       directories you just copied the stuff for
+       the bot and for the WEB UI
+    7. Run the database/db_install.php script to 
+       create the database or optionally create it 
+       yourself
+    8. Start up the bot by typing 'php mylly.php'
+       in folder you copied the contents of bot/
+       directory
 	
 I.II    Basic commands
 ----------------------------------------------
@@ -50,7 +79,7 @@ Basic commands of MyllyBot include:
     !addcmd - Adds 3rd party command to the bot
     !commands - Prints all commands of the bot
     !sql - Run SQL clause
-    !lastur - Prints out the last URL mentioned
+    !lasturl - Prints out the last URL mentioned
 	
 	
     

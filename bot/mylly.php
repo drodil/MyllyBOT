@@ -7,9 +7,12 @@
      
     if(!isset($bot))
     {
-        $bot['log'] = 1;
-        $bot['debug'] = 0;
-     
+        /* Logging and debugging */
+        $bot['console_output'] = true;
+        $bot['database_debug'] = false;
+        $bot['file_debug'] = false;
+        $bot['file_debug_location'] = "";
+         
         /* Bot settings */
         $bot['botnick'] = "";
         $bot['botpassword'] = "";

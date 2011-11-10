@@ -57,7 +57,7 @@
                                                       KEY `command` (`command`)
                                                         ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;");
 
-    mysql_query("CREATE TABLE IF NOT EXISTS `log` (
+    mysql_query("CREATE TABLE IF NOT EXISTS `irc_log` (
                                                    `ID` int(11) NOT NULL AUTO_INCREMENT,
                                                    `data_type` enum('PRIVMSG','ACTION') NOT NULL,
                                                    `raw_data` text NOT NULL,
