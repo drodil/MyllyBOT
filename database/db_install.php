@@ -26,7 +26,7 @@
     $res = mysql_query("SELECT value FROM settings WHERE key = 'DB_VERSION'");
     if(mysql_num_rows($res) > 0)
     {
-        $row = mysql_fetch_row($result);
+        $row = mysql_fetch_row($res);
         
         /* If current version is newer, drop all tables */
         if($row[0] < DB_VERSION)
