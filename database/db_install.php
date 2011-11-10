@@ -5,8 +5,6 @@
     // Growing DB version number if the structure changes
     define("DB_VERSION", 1);
     
-    $link = mysql_connect($cfg['db_host'], $cfg['db_user'], $cfg['db_pass']);
-
     $link = mysql_connect($cfg['database_host'], $cfg['database_user'], $cfg['database_password']);
     if (!$link) 
     {
@@ -91,7 +89,14 @@
                                                         PRIMARY KEY(`id`),
                                                         UNIQUE KEY `key` (`key`)
                                                         ) ENGINE=MyISAM DEFAULT CHASET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;");
-                                           
+
+    mysql_query("CREATE TABLE IF NOT EXISTS `debug` (
+                                                     `id` int(11) NOT NULL AUTO_INCREMENT,
+                                                     `log` text NOT NULL COLLATE utf8_unicode_ci NOT NULL,
+                                                     `time` datetime NOT NULL,
+                                                     PRIMARY KEY(`id`)
+                                                     ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;");
+                                                        
     /* Clear settings table just to be sure */
     mysql_query("TRUNCATE TABLE settings");
 

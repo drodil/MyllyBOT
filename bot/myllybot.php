@@ -146,7 +146,8 @@ class MyllyBot {
 		}
 		else
 		{
-			if(strlen($this->botpassword) > 0) {
+			if(strlen($this->botpassword) > 0) 
+            {
 				$this->send("PASS ".$this->botpassword, true);
 			}
 			
