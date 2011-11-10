@@ -320,14 +320,16 @@ then
     if [ "$installwebui" != "n" ]
     then
         mkdir -p $documentroot
-        cp -f conf_inc.php $documentroot
         cp -R ./www/* $documentroot
+        cp -R ./misc/* $documentroot
+        cp -f conf_inc.php $documentroot
     fi
     
     # Create bot installation dir
     mkdir -p $installdir
+    cp -Rf ./misc/* $installdir
+    cp -Rf ./bot/* $installdir
     cp -f conf_inc.php $installdir
-    cp -R ./bot/* $installdir
     
     # Run database installation script to create tables
     cp -f conf_inc.php database/
