@@ -23,10 +23,10 @@
         $bot['serverchannel'] = array("#channel1", "#channel2"); //or just a "#singlechannel"
      
         /* Database settings */
-        $bot['database_host'] = "";
-        $bot['database_user'] = "";
-        $bot['database_password'] = "";
-        $bot['database_name'] = "";
+        $cfg['database_host'] = "";
+        $cfg['database_user'] = "";
+        $cfg['database_password'] = "";
+        $cfg['database_name'] = "";
         
         /* Proxy settings */
         $bot['http_proxy'] = "";

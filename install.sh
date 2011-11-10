@@ -276,10 +276,10 @@ then
     echo "      \$bot['log'] = 1;" >> $conffile
     echo "      \$bot['debug'] = 0;" >> $conffile
     echo "" >> $conffile
-    echo "      \$bot['database_host'] = \"$mysqlhost\";" >> $conffile
-    echo "      \$bot['database_user'] = \"$mysqluser\";" >> $conffile
-    echo "      \$bot['database_password'] = \"$mysqlpwd\";" >> $conffile
-    echo "      \$bot['database_name'] = \"$mysqldb\";" >> $conffile
+    echo "      \$cfg['database_host'] = \"$mysqlhost\";" >> $conffile
+    echo "      \$cfg['database_user'] = \"$mysqluser\";" >> $conffile
+    echo "      \$cfg['database_password'] = \"$mysqlpwd\";" >> $conffile
+    echo "      \$cfg['database_name'] = \"$mysqldb\";" >> $conffile
     echo "" >> $conffile
     echo "      \$bot['botnick'] = \"$botname\";" >> $conffile
     echo "      \$bot['botpassword'] = \"$botpwd\";" >> $conffile
@@ -313,6 +313,7 @@ then
     
     echo "?>" >> $conffile
     
+    # Override the current configuration file
     echo "<?php include('$conffile'); ?>" > conf_inc.php
     
     # Create Web UI dir

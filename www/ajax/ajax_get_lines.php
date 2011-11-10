@@ -1,17 +1,17 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
-require_once '../conf.php';
+require_once '../conf_inc.php';
 
 $t = isset($_POST['t'])?($_POST['t']+0):0;
 
 $ret_arr = array('lines' => 0, 'time' => microtime(true));
 
-$link = mysql_connect($cfg['db_host'], $cfg['db_user'], $cfg['db_pass']);
+$link = mysql_connect($cfg['database_host'], $cfg['database_user'], $cfg['database_password']);
 if (!$link) {
 	$ret_arr['error'] = 'link';
 	die(json_encode($ret_arr));
 }
-if (!mysql_select_db($cfg['db_name'])) {
+if (!mysql_select_db($cfg['database_name'])) {
 	$ret_arr['error'] = 'db';
 	die(json_encode($ret_arr));
 }

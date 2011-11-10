@@ -70,10 +70,10 @@ class MyllyBot {
 		$this->serverport = $bot['serverport'];
 		$this->serverchannel = $bot['serverchannel'];
 
-		$this->database_host = $bot['database_host'];
-		$this->database_user = $bot['database_user'];
-		$this->database_password = $bot['database_password'];
-		$this->database_name = $bot['database_name'];
+		$this->database_host = $cfg['database_host'];
+		$this->database_user = $cfg['database_user'];
+		$this->database_password = $cfg['database_password'];
+		$this->database_name = $cfg['database_name'];
 		
 		if(isset($bot['http_proxy']))
 		{
