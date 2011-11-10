@@ -444,7 +444,7 @@ class MyllyBot {
 					else
 					{
 						$command = $this->data['message'];
-						if(!isset($vars) {
+						if(!isset($vars)) {
 							$vars = "";
 						}
 					}
