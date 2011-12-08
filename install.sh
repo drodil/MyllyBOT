@@ -126,7 +126,11 @@ then
 fi
 
 echo ""
-echo -n "Bot password > "
+echo -n "Bot admin username > "
+read botusr
+
+echo ""
+echo -n "Bot admin password > "
 read botpwd
 
 echo ""
@@ -230,7 +234,8 @@ echo "MySQL database: $mysqldb"
 
 echo ""
 echo "Bot name: $botname"
-echo "Bot password: $botpwd"
+echo "Bot admin username: $botusr"
+echo "Bot admin password: $botpwd"
 echo "Bot ident: $botident"
 echo "Bot real name: $botrealname"
 
@@ -336,6 +341,13 @@ then
     # Run database installation script to create tables
     cp -f conf_inc.php database/
     php database/db_install.php
+
+    # Set up access for administrator
+    echo "<?php include('$conffile');" > database/usr_access.php
+    echo "\$query='INSERT INTO access VALUES ('$botusr', MD5('$botpwd'), '5', '*', '*');" >> database/usr_access.php
+    echo "mysql_query(\$query); ?>" >> database/usr_access.php
+    php database/usr_access.php
+    rm -f database/usr_access.php
     
     # Remove temp conf_inc.php
     rm -rf conf_inc.php
