@@ -406,7 +406,20 @@ class MyllyBot
 				break;
 
 			case '!lasturl':
-				return $this->last_url();
+                return $this->last_url();
+                break;
+
+            case '!date':
+                return date('j.m.Y');
+                break;
+
+            case '!time':
+                return date('H:i u');
+                break;
+
+            case '!google':
+                return $this->google_search($vars);
+                break;
 
 			default:
 				$this->database_connect();
@@ -421,6 +434,37 @@ class MyllyBot
         // TODO : Move this handling to the database and also check for channel
 		return $this->lasturl;
 	}
+
+    private function google_search($vars)
+    {
+        /* SEE https://developers.google.com/web-search/docs */
+        if(!$vars)
+        {
+            return "Usage: !google [search]";
+        }
+
+        $query = implode(" ", $vars);
+        $url = "https://ajax.googleapis.com/ajax/services/search/web?v=1.0&"
+               . "q=".$query;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $body = curl_exec($ch);
+        curl_close($ch);
+
+        $returnData = "";
+        $json = json_decode($body);
+        if($json)
+        {
+            $response = $json->responseData;
+            foreach($response->results as $result)
+            {
+                $returnData .= $result->titleNoFormatting . ' - ' .$result->url . '\n';
+            }
+        }
+
+        return $returnData;
+    }
 
 	/* Yet another parser function (?) */
 	private function parse_data()
